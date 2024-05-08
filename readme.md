@@ -51,4 +51,44 @@ This command wille create and start a container named "todo-api" (--name option)
 
 Browse to http://localhost:5000/tasks to see the results.
 
+
+## 2. Build and deploy with Docker
+
+Now, I will attempt to build and deploy my application's source code within a container. To achieve this, let's create our new Dockerfile.
+
+### Dockerfile
+```Docker
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+WORKDIR /App
+
+# Copy everything
+COPY . ./
+# Restore as distinct layers
+RUN dotnet restore
+# Build and publish a release
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /App
+COPY --from=build-env /App/out .
+ENTRYPOINT ["dotnet", "SimpleTodo.Api.dll"]
+```
+
+### Docker image
+Create a new image from Dockerfile:
+```bash
+podman build -t simple-todo:5.0 -f Dockerfile-build-and-publish .
+```
+
+### Docker container
+
+To run our container, use the following command  
+```bash
+ podman run --name todo-api-2 -p 5001:8080 -d simple-todo:5.0.
+```
+
+Browse to http://localhost:5001/tasks to see the results.
+
+
 Enjoy! 😊
